@@ -88,14 +88,18 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 void reset() {
 	for (int i = 0; i < 4; i++) shape_counts[i] = 0;
-	shape_count = 0;
-	iskeydown = 0;
 	index.clear();
 	index = { {}, {}, {}, {} };
 	posList.clear();
 	posList = { {}, {}, {}, {} };
 }
 
+void reset_quadrant(int quadrant) {
+	shape_counts[quadrant] = 0;
+	index[quadrant].clear();
+	posList[quadrant].clear();
+
+}
 void timer_move(int value) {
 	glutPostRedisplay();
 	glutTimerFunc(100, timer_move, 1);
@@ -129,9 +133,17 @@ void Mouse(int button, int state, int x, int y)
 
 	GLfloat input_pos[2] = { x, y };
 	clamp_pos(input_pos);
+	int quadrant = get_quadrant(input_pos);
+
 	if (state == GLUT_DOWN) {
-		int quadrant = get_quadrant(input_pos);
-		input_shape(quadrant, input_pos);
+		if (button == GLUT_LEFT_BUTTON) {
+			reset_quadrant(quadrant);
+			input_shape(quadrant, input_pos);
+		}
+		else if (button == GLUT_RIGHT_BUTTON) {
+
+			input_shape(quadrant, input_pos);
+		}
 
 		glutPostRedisplay();
 	}
@@ -307,6 +319,7 @@ void input_tri(int quadrant, GLfloat* input_pos) {
 	index[quadrant].push_back(lastindex + 1);
 	index[quadrant].push_back(lastindex + 2);
 }
+
 
 float random_float(float low, float high) {
 	return low + (float)rand() * (high - low) / RAND_MAX;
