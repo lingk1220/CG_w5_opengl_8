@@ -25,8 +25,9 @@ float random_float(float low, float high);
 GLvoid Keyboard(unsigned char key, int x, int y);
 void Mouse(int button, int state, int x, int y);
 void clamp_pos(GLfloat* input_pos);
-void input_shape(char cmd, GLfloat* input_pos);
-void input_tri(GLfloat* input_pos);
+void input_shape(int quadrant, GLfloat* input_pos);
+void input_tri(int quadrant, GLfloat* input_pos);
+int get_quadrant(GLfloat* input_pos);
 void random_shape();
 void move_shape();
 
@@ -39,7 +40,6 @@ GLuint VBO_dot, VBO_line, VBO_tri, VBO_rect, EBO;
 std::vector<GLuint> VAO;
 std::vector<GLuint> VBO;
 char cmd = 0;
-int shape[4] = { GL_POINTS, GL_LINES,  GL_TRIANGLES , GL_TRIANGLES };
 int rnd_shape = 0, rnd_index = 0;
 int dir = 0;
 
@@ -87,6 +87,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 }
 
 void reset() {
+	for (int i = 0; i < 4; i++) shape_counts[i] = 0;
 	shape_count = 0;
 	iskeydown = 0;
 	index.clear();
@@ -129,7 +130,8 @@ void Mouse(int button, int state, int x, int y)
 	GLfloat input_pos[2] = { x, y };
 	clamp_pos(input_pos);
 	if (state == GLUT_DOWN) {
-		input_shape(cmd, input_pos);
+		int quadrant = get_quadrant(input_pos);
+		input_shape(quadrant, input_pos);
 
 		glutPostRedisplay();
 	}
@@ -260,35 +262,27 @@ void draw_shapes() {
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, index[i].size() * sizeof(float), index[i].data(), GL_STATIC_DRAW);
-		std::cout << posList.size() << std::endl;
+
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 		glEnableVertexAttribArray(1);
-		glDrawElements(shape[i], index[i].size(), GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, index[i].size(), GL_UNSIGNED_INT, 0);
 	}
 }
 
-void input_shape(char cmd, GLfloat* input_pos) {
-	if (shape_count >= MAXSHAPECOUNT) return;
-	switch (cmd) {
-	case 'p':
-		break;
-	case 'l':
-		break;
-
-	case 't':
-		input_tri(input_pos);
-		break;
-
-	case 'r':
-		break;
+void input_shape(int quadrant, GLfloat* input_pos) {
+	std::cout << shape_counts[quadrant] << "\n";
+	if (shape_counts[quadrant] < 3)
+	{
+		input_tri(quadrant, input_pos);
+		shape_count++;
+		shape_counts[quadrant]++;
 	}
-	shape_count++;
 }
 
 
-void input_tri(GLfloat* input_pos) {
+void input_tri(int quadrant, GLfloat* input_pos) {
 	float lx[3] = { 0, -0.5, 0.5 };
 	float ly[3] = { 0.8, -0.5, -0.5 };
 
@@ -298,21 +292,20 @@ void input_tri(GLfloat* input_pos) {
 	float g = random_float(0.3, 1);
 	float b = random_float(0.3, 1);
 
-	int lastindex = index[2].size() / 3 * 3;
-
+	int lastindex = index[quadrant].size() / 3 * 3;
+	//std::cout << quadrant << "\n";
 	for (int i = 0; i < 3; i++) {
-		posList[2].push_back(input_pos[0] + radius / 2 * lx[i]);
-		posList[2].push_back(input_pos[1] + radius / 2 * ly[i]);
-		posList[2].push_back(0.0f);
-		posList[2].push_back(r);
-		posList[2].push_back(g);
-		posList[2].push_back(b);
+		posList[quadrant].push_back(input_pos[0] + radius / 2 * lx[i]);
+		posList[quadrant].push_back(input_pos[1] + radius / 2 * ly[i]);
+		posList[quadrant].push_back(0.0f);
+		posList[quadrant].push_back(r);
+		posList[quadrant].push_back(g);
+		posList[quadrant].push_back(b);
 	}
 
-	index[2].push_back(lastindex);
-	index[2].push_back(lastindex + 1);
-	index[2].push_back(lastindex + 2);
-	shape_counts[2]++;
+	index[quadrant].push_back(lastindex);
+	index[quadrant].push_back(lastindex + 1);
+	index[quadrant].push_back(lastindex + 2);
 }
 
 float random_float(float low, float high) {
@@ -341,4 +334,23 @@ void move_shape() {
 		posList[rnd_shape][6 * (rnd_index * vertex_count[rnd_shape] + i) + 1] += dy[dir] * 0.01f;
 	}
 	glutPostRedisplay();
+}
+
+int get_quadrant(GLfloat* input_pos) {
+	if (input_pos[0] > 0) {
+		if (input_pos[1] > 0) {
+			return 0;
+		}
+		else {
+			return 3;
+		}
+	}
+	else {
+		if (input_pos[1] > 0) {
+			return 1;
+		}
+		else {
+			return 2;
+		}
+	}
 }
