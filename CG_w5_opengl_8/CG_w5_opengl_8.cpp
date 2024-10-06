@@ -20,6 +20,7 @@ GLvoid Reshape(int w, int h);
 char* filetobuf(const char* file);
 GLvoid init_buffer();
 void timer_move(int value);
+void draw_quadrant();
 void draw_shapes();
 float random_float(float low, float high);
 GLvoid Keyboard(unsigned char key, int x, int y);
@@ -47,16 +48,26 @@ int shape_counts[4] = { 0, };
 int shape_count = 0;
 int iskeydown = 0;
 
+
 std::vector<std::vector<unsigned int>> index = {
 	{}, {}, {}, {}
 };
 
-
+std::vector<std::vector<unsigned int>> line_index = {
+	{}, {}, {}, {}
+};
 
 std::vector <std::vector<float >> posList = { {}, {}, {},
 	{}
 };
 
+
+std::vector<float> quadLineList = { //사분면을 나누는 흰색 선
+	-1, 0, 0, 1, 1, 1,
+	1, 0, 0, 1, 1, 1,
+	0, -1, 0, 1, 1, 1,
+	0, 1, 0, 1, 1, 1
+};
 
 //--- 메인 함수
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -98,6 +109,7 @@ void reset_quadrant(int quadrant) {
 	shape_counts[quadrant] = 0;
 	index[quadrant].clear();
 	posList[quadrant].clear();
+	line_index[quadrant].clear();
 
 }
 void timer_move(int value) {
@@ -227,6 +239,7 @@ GLvoid drawScene() {
 	glUseProgram(shaderID);
 
 	draw_shapes();
+	draw_quadrant();
 	glutSwapBuffers();
 }
 
@@ -265,9 +278,23 @@ void init_buffer() {
 	glGenBuffers(1, &EBO);
 }
 
+void draw_quadrant() {
+	glBindVertexArray(VAO[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+	glBufferData(GL_ARRAY_BUFFER, quadLineList.size() * sizeof(float), quadLineList.data(), GL_STATIC_DRAW);
+
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	glDrawArrays(GL_LINES, 0, 4);
+}
+
 void draw_shapes() {
 	for (int i = 0; i < 4; i++) {
-		if (posList.empty()) continue;
+		/*if (posList.empty()) continue;
 		glBindVertexArray(VAO[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO[i]);
 		glBufferData(GL_ARRAY_BUFFER, posList[i].size() * sizeof(float), posList[i].data(), GL_STATIC_DRAW);
@@ -279,14 +306,33 @@ void draw_shapes() {
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 		glEnableVertexAttribArray(1);
-		glDrawElements(GL_TRIANGLES, index[i].size(), GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, index[i].size(), GL_UNSIGNED_INT, 0);*/
+
+
+		if (posList.empty()) continue;
+		glBindVertexArray(VAO[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO[i]);
+		glBufferData(GL_ARRAY_BUFFER, posList[i].size() * sizeof(float), posList[i].data(), GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, line_index[i].size() * sizeof(float), line_index[i].data(), GL_STATIC_DRAW);
+		//std::cout << line_index[i].size() << "\n";
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+		glDrawElements(GL_LINES, line_index[i].size(), GL_UNSIGNED_INT, 0);
+		//구조변경필수
 	}
+
+
 }
 
 void input_shape(int quadrant, GLfloat* input_pos) {
-	std::cout << shape_counts[quadrant] << "\n";
 	if (shape_counts[quadrant] < 3)
 	{
+		std::cout << quadrant << "\n";
+		//std::cout << shape_counts[quadrant] << "\n";
 		input_tri(quadrant, input_pos);
 		shape_count++;
 		shape_counts[quadrant]++;
@@ -305,7 +351,6 @@ void input_tri(int quadrant, GLfloat* input_pos) {
 	float b = random_float(0.3, 1);
 
 	int lastindex = index[quadrant].size() / 3 * 3;
-	//std::cout << quadrant << "\n";
 	for (int i = 0; i < 3; i++) {
 		posList[quadrant].push_back(input_pos[0] + radius / 2 * lx[i]);
 		posList[quadrant].push_back(input_pos[1] + radius / 2 * ly[i]);
@@ -318,6 +363,14 @@ void input_tri(int quadrant, GLfloat* input_pos) {
 	index[quadrant].push_back(lastindex);
 	index[quadrant].push_back(lastindex + 1);
 	index[quadrant].push_back(lastindex + 2);
+
+	lastindex = line_index[quadrant].size() / 6 * 3;
+	line_index[quadrant].push_back(lastindex);
+	line_index[quadrant].push_back(lastindex + 1);
+	line_index[quadrant].push_back(lastindex + 1);
+	line_index[quadrant].push_back(lastindex + 2);
+	line_index[quadrant].push_back(lastindex + 2);
+	line_index[quadrant].push_back(lastindex);
 }
 
 
