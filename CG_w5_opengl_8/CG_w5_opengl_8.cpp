@@ -19,6 +19,7 @@ GLvoid drawScene();
 GLvoid Reshape(int w, int h);
 char* filetobuf(const char* file);
 GLvoid init_buffer();
+void reset();
 void timer_move(int value);
 void draw_quadrant();
 void draw_shapes();
@@ -27,6 +28,7 @@ GLvoid Keyboard(unsigned char key, int x, int y);
 void Mouse(int button, int state, int x, int y);
 void clamp_pos(GLfloat* input_pos);
 void input_shape(int quadrant, GLfloat* input_pos);
+void input_shape(int quadrant);
 void input_tri(int quadrant, GLfloat* input_pos);
 int get_quadrant(GLfloat* input_pos);
 void random_shape();
@@ -95,15 +97,20 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutKeyboardFunc(Keyboard);
 	glutMouseFunc(Mouse);
 	init_buffer();
+	reset();
 	glutMainLoop();
 }
 
 void reset() {
-	for (int i = 0; i < 4; i++) shape_counts[i] = 0;
+	
 	index.clear();
 	index = { {}, {}, {}, {} };
 	posList.clear();
 	posList = { {}, {}, {}, {} };
+	for (int i = 0; i < 4; i++) {
+		shape_counts[i] = 0;
+		input_shape(i);
+	}
 }
 
 void reset_quadrant(int quadrant) {
@@ -356,6 +363,22 @@ void draw_tri_line(int quadrant) {
 void input_shape(int quadrant, GLfloat* input_pos) {
 	if (shape_counts[quadrant] < 3)
 	{
+		std::cout << quadrant << "\n";
+		//std::cout << shape_counts[quadrant] << "\n";
+		input_tri(quadrant, input_pos);
+		shape_count++;
+		shape_counts[quadrant]++;
+	}
+}
+
+void input_shape(int quadrant) {
+	GLfloat ox[4] = { 0, -1, -1, 0 };
+	GLfloat oy[4] = { 0, 0, -1, -1 };
+	if (shape_counts[quadrant] < 3)
+	{
+		GLfloat input_pos[2];
+		input_pos[0] = ox[quadrant] + random_float(0.3, 0.7);
+		input_pos[1] = oy[quadrant] + random_float(0.3, 0.7);
 		std::cout << quadrant << "\n";
 		//std::cout << shape_counts[quadrant] << "\n";
 		input_tri(quadrant, input_pos);
