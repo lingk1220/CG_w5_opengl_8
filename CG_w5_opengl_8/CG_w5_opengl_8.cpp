@@ -31,7 +31,8 @@ void input_tri(int quadrant, GLfloat* input_pos);
 int get_quadrant(GLfloat* input_pos);
 void random_shape();
 void move_shape();
-
+void draw_tri_face(int quadrant);
+void draw_tri_line(int quadrant);
 //--- 필요한 변수 선언
 GLint width, height;
 GLuint shaderID; //--- 세이더 프로그램 이름
@@ -47,7 +48,7 @@ int dir = 0;
 int shape_counts[4] = { 0, };
 int shape_count = 0;
 int iskeydown = 0;
-
+int drawmode = 0;
 
 std::vector<std::vector<unsigned int>> index = {
 	{}, {}, {}, {}
@@ -125,6 +126,13 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	case 't':
 	case 'r':
 		cmd = key;
+		break;
+
+	case 'a':
+		drawmode = 0;
+		break;
+	case 'b':
+		drawmode = 1;
 		break;
 	case 'q':
 		glutLeaveMainLoop();
@@ -294,37 +302,54 @@ void draw_quadrant() {
 
 void draw_shapes() {
 	for (int i = 0; i < 4; i++) {
-		/*if (posList.empty()) continue;
-		glBindVertexArray(VAO[i]);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO[i]);
-		glBufferData(GL_ARRAY_BUFFER, posList[i].size() * sizeof(float), posList[i].data(), GL_STATIC_DRAW);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, index[i].size() * sizeof(float), index[i].data(), GL_STATIC_DRAW);
+		switch (drawmode) {
+		case 0:
+			draw_tri_face(i);
+			break;
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-		glDrawElements(GL_TRIANGLES, index[i].size(), GL_UNSIGNED_INT, 0);*/
-
-
-		if (posList.empty()) continue;
-		glBindVertexArray(VAO[i]);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO[i]);
-		glBufferData(GL_ARRAY_BUFFER, posList[i].size() * sizeof(float), posList[i].data(), GL_STATIC_DRAW);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, line_index[i].size() * sizeof(float), line_index[i].data(), GL_STATIC_DRAW);
-		//std::cout << line_index[i].size() << "\n";
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-		glDrawElements(GL_LINES, line_index[i].size(), GL_UNSIGNED_INT, 0);
+		case 1:
+			draw_tri_line(i);
+			break;
+		}
+		
 		//구조변경필수
 	}
 
+
+}
+
+void draw_tri_face(int quadrant) {
+	if (posList.empty()) return;
+	glBindVertexArray(VAO[quadrant]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[quadrant]);
+	glBufferData(GL_ARRAY_BUFFER, posList[quadrant].size() * sizeof(float), posList[quadrant].data(), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index[quadrant].size() * sizeof(float), index[quadrant].data(), GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glDrawElements(GL_TRIANGLES, index[quadrant].size(), GL_UNSIGNED_INT, 0);
+
+}
+
+void draw_tri_line(int quadrant) {
+	if (posList.empty()) return;
+	glBindVertexArray(VAO[quadrant]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[quadrant]);
+	glBufferData(GL_ARRAY_BUFFER, posList[quadrant].size() * sizeof(float), posList[quadrant].data(), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, line_index[quadrant].size() * sizeof(float), line_index[quadrant].data(), GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glDrawElements(GL_LINES, line_index[quadrant].size(), GL_UNSIGNED_INT, 0);
 
 }
 
