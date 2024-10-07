@@ -369,7 +369,7 @@ void input_tri(int quadrant, GLfloat* input_pos) {
 	float lx[3] = { 0, -0.5, 0.5 };
 	float ly[3] = { 0.8, -0.5, -0.5 };
 
-	float radius = 0.5f;
+	float radius = random_float(0.3f, 0.7f);;
 
 	float r = random_float(0.3, 1);
 	float g = random_float(0.3, 1);
